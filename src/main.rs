@@ -14,20 +14,22 @@ use std::process::exit;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Token {
-    INC, //+ Increment the current value
-    DEC, //- Decrement the current value
-    MLT, //< Move left in the memory array
-    MRT, //> Move right in the memory array
-    LEN, //[ Start a loop section
-    LEX, //] End a loop section
-    OUT, //, Output the current value as character
-    INP, //. Input a character as a value
+    INC, // + Increment the current value
+    DEC, // - Decrement the current value
+    MLT, // < Move left in the memory array
+    MRT, // > Move right in the memory array
+    LEN, // [ Start a loop section
+    LEX, // ] End a loop section
+    OUT, // , Output the current value as character
+    INP, // . Input a character as a value
+    END, // & Immediately exits the program
 }
 #[derive(Debug)]
 enum BFErrorCode {
     UnmatchedLoopExit,
     UnmatchedLoopEnter,
     KeyboardInterrupt,
+    Exit,
 }
 
 #[allow(dead_code)]
@@ -62,6 +64,7 @@ fn tokenize(code: String, comments: bool) -> Result<Vec<Token>, BFError> {
             (']', false, _) => tokens.push(Token::LEX),
             (',', false, _) => tokens.push(Token::INP),
             ('.', false, _) => tokens.push(Token::OUT),
+            ('&', false, _) => tokens.push(Token::END),
             ('#', _, true) => comment = true,
             ('\n', true, true) => comment = false,
             _ => (),
@@ -79,6 +82,7 @@ enum AstNode {
     MLT,
     OUT,
     INP,
+    END,
     LOP(Vec<AstNode>),
 }
 
@@ -97,6 +101,7 @@ fn parse(tokens: Vec<Token>) -> Result<Vec<AstNode>, BFError> {
                 Token::MLT => ast.push(AstNode::MLT),
                 Token::OUT => ast.push(AstNode::OUT),
                 Token::INP => ast.push(AstNode::INP),
+                Token::END => ast.push(AstNode::END),
                 Token::LEX => {
                     return Err(BFError::new(
                         BFErrorCode::UnmatchedLoopExit,
@@ -183,6 +188,9 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> Result<(), BFError> {
             AstNode::DEC => tape.sub(),
             AstNode::MRT => tape.mrt(),
             AstNode::MLT => tape.mlt(),
+            AstNode::END => return Err(
+                BFError { code: BFErrorCode::Exit,
+                            message: format!("Program exited with code {}",tape.get()) }),
             AstNode::OUT => {
                 print!("{}", tape.get() as char);
                 stdout().flush().unwrap_or_default()
@@ -238,7 +246,7 @@ fn main() {
         .arg(arg![path: [path] "The path of the .bf file.\nIf absent, reads from stdin to EOF (Ctrl-D / Ctrl-Z)"],)
         .arg(arg![comments: -c --comments "Line comments start with # and end at a newline"]);
 
-    let matches = command.get_matches_from(["brainfuck", ".\\code.bf"]);
+    let matches = command.get_matches();
 
     let mut code = String::new();
     let code = match matches.get_one::<String>("path") {
@@ -275,5 +283,10 @@ fn main() {
         }
     };
     let mut tape = Tape::new();
-    execute(ast, &mut tape).unwrap();
+
+
+    match execute(ast, &mut tape) {
+        Ok(()) => (),
+        Err(e) => eprintln!("\n{}", e.message)
+    };
 }
