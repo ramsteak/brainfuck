@@ -1,8 +1,15 @@
+extern crate clap;
+extern crate crossterm;
+
+use crossterm::{
+    event::{self, Event},
+    terminal,
+};
+
 use clap::{arg, Command};
-use termion::input::TermRead;
 
 use std::fs::File;
-use std::io::{stdin, Read, stdout, Write};
+use std::io::{stdin, stdout, Read, Write};
 use std::process::exit;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -86,8 +93,7 @@ fn parse(tokens: Vec<Token>) -> Result<Vec<AstNode>, BFError> {
                     return Err(BFError::new(
                         BFErrorCode::UnmatchedLoopExit,
                         "Unmatched character \"]\"".to_string(),
-                        )
-                    )
+                    ))
                 }
                 Token::LEN => {
                     depth += 1;
@@ -108,7 +114,10 @@ fn parse(tokens: Vec<Token>) -> Result<Vec<AstNode>, BFError> {
         }
     }
     if depth != 0 {
-        return Err(BFError { code: BFErrorCode::UnmatchedLoopEnter, message: "Unmatched character \"]\"".to_string() })
+        return Err(BFError {
+            code: BFErrorCode::UnmatchedLoopEnter,
+            message: "Unmatched character \"]\"".to_string(),
+        });
     }
 
     Ok(ast)
@@ -151,18 +160,26 @@ impl Tape {
 }
 
 fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
+    terminal::enable_raw_mode().unwrap_or_default();
     for node in ast {
         match node {
             AstNode::INC => tape.add(),
             AstNode::DEC => tape.sub(),
             AstNode::MRT => tape.mrt(),
             AstNode::MLT => tape.mlt(),
-            AstNode::OUT => {print!("{}", tape.get() as char); stdout().flush().unwrap_or_default()},
+            AstNode::OUT => {
+                print!("{}", tape.get() as char);
+                stdout().flush().unwrap_or_default()
+            }
             AstNode::INP => {
-                let mut inputbuf = [0; 1];
-                match stdin().read_exact(&mut inputbuf) {
-                    Ok(()) => tape.set(inputbuf[0]),
-                    Err(_) => panic!("AAaaa"),// tape.set(0),
+                if let Ok(
+                        Event::Key(event::KeyEvent {
+                            code: event::KeyCode::Char(char),
+                            modifiers: event::KeyModifiers::NONE,
+                            kind: event::KeyEventKind::Release,
+                            state: _
+                })) = event::read(){
+                    tape.set(char as u8);
                 };
             }
             AstNode::LOP(subloop) => {
@@ -172,6 +189,7 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
             }
         }
     }
+    terminal::disable_raw_mode().unwrap_or_default();
 }
 
 fn main() {
@@ -198,11 +216,17 @@ fn main() {
     };
     let tokens = match tokenize(code) {
         Ok(tokens) => tokens,
-        Err(e) => {eprintln!("{}", e.message);exit(-1)}
+        Err(e) => {
+            eprintln!("{}", e.message);
+            exit(-1)
+        }
     };
     let ast = match parse(tokens) {
         Ok(ast) => ast,
-        Err(e) => {eprintln!("{}", e.message);exit(-1)}
+        Err(e) => {
+            eprintln!("{}", e.message);
+            exit(-1)
+        }
     };
     let mut tape = Tape::new();
     execute(ast, &mut tape);
