@@ -160,7 +160,7 @@ impl Tape {
 }
 
 fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
-    terminal::enable_raw_mode().unwrap_or_default();
+    terminal::enable_raw_mode().unwrap();
     for node in ast {
         match node {
             AstNode::INC => tape.add(),
@@ -189,12 +189,12 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
             }
         }
     }
-    terminal::disable_raw_mode().unwrap_or_default();
+    terminal::disable_raw_mode().unwrap();
 }
 
 fn main() {
     let command = Command::new("brainfuck").version("0.1.0").arg(
-        arg![path: [path] "The path of the .bf file.\nIf no path is specified, reads from stdin"],
+        arg![path: [path] "The path of the .bf file.\nIf no path is specified, reads from stdin to EOF (Ctrl-D / Ctrl-Z)"],
     );
 
     let matches = command.get_matches();
