@@ -48,19 +48,22 @@ impl BFError {
 
 /// Takes a string representing the code and generates a vec of tokens,
 /// representing the program.
-fn tokenize(code: String) -> Result<Vec<Token>, BFError> {
+fn tokenize(code: String, comments: bool) -> Result<Vec<Token>, BFError> {
     let mut tokens = Vec::<Token>::new();
+    let mut comment = false;
 
     for char in code.chars() {
-        match char {
-            '+' => tokens.push(Token::INC),
-            '-' => tokens.push(Token::DEC),
-            '<' => tokens.push(Token::MLT),
-            '>' => tokens.push(Token::MRT),
-            '[' => tokens.push(Token::LEN),
-            ']' => tokens.push(Token::LEX),
-            ',' => tokens.push(Token::INP),
-            '.' => tokens.push(Token::OUT),
+        match (char, &comment, comments) {
+            ('+', false, _) => tokens.push(Token::INC),
+            ('-', false, _) => tokens.push(Token::DEC),
+            ('<', false, _) => tokens.push(Token::MLT),
+            ('>', false, _) => tokens.push(Token::MRT),
+            ('[', false, _) => tokens.push(Token::LEN),
+            (']', false, _) => tokens.push(Token::LEX),
+            (',', false, _) => tokens.push(Token::INP),
+            ('.', false, _) => tokens.push(Token::OUT),
+            ('#', _, true) => comment = true,
+            ('\n', true, true) => comment = false,
             _ => (),
         };
     }
@@ -231,11 +234,11 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> Result<(), BFError> {
 }
 
 fn main() {
-    let command = Command::new("brainfuck").version("0.1.0").arg(
-        arg![path: [path] "The path of the .bf file.\nIf no path is specified, reads from stdin to EOF (Ctrl-D / Ctrl-Z)"],
-    );
+    let command = Command::new("brainfuck").version("0.1.0")
+        .arg(arg![path: [path] "The path of the .bf file.\nIf absent, reads from stdin to EOF (Ctrl-D / Ctrl-Z)"],)
+        .arg(arg![comments: -c --comments "Line comments start with # and end at a newline"]);
 
-    let matches = command.get_matches();
+    let matches = command.get_matches_from(["brainfuck", ".\\code.bf"]);
 
     let mut code = String::new();
     let code = match matches.get_one::<String>("path") {
@@ -252,7 +255,12 @@ fn main() {
             code
         }
     };
-    let tokens = match tokenize(code) {
+    let comments = if let Some(comments) = matches.get_one::<bool>("comments") {
+        comments
+    } else {
+        &false
+    };
+    let tokens = match tokenize(code, comments.clone()) {
         Ok(tokens) => tokens,
         Err(e) => {
             eprintln!("{}", e.message);
@@ -267,5 +275,5 @@ fn main() {
         }
     };
     let mut tape = Tape::new();
-    execute(ast, &mut tape);
+    execute(ast, &mut tape).unwrap();
 }
