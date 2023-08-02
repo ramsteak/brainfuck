@@ -12,6 +12,8 @@ This is a simple Brainfuck interpreter written in Rust. Brainfuck is an esoteric
 ## Usage
 Make sure to have rust and cargo installed on your system.
 1. Clone the repository
+1. Build the project with cargo `cargo build`
+1. Alternatively use the makefile with `make build`
 1. Run with cargo `cargo run -- ./code.bf`
 1. Alternatively you can input your program from stdin with `cargo run --`
 1. To terminate the input press Ctrl-D on Unix and Ctrl-Z on Windows.
