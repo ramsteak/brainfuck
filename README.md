@@ -7,10 +7,10 @@ This is a simple Brainfuck interpreter written in Rust. Brainfuck is an esoteric
 - Executes the AST on a virtual tape that simulates the memory of the Brainfuck program.
 - Supports both reading Brainfuck code from a file and reading from standard input.
 - Handles input and output with ASCII characters.
+- Custom instruction &: immediately terminates execution and returns status code
 
 ## Usage
-Make sure to have rust and cargo installed on your system
-
+Make sure to have rust and cargo installed on your system.
 1. Clone the repository
 1. Run with cargo `cargo run -- ./code.bf`
 1. Alternatively you can input your program from stdin with `cargo run --`
