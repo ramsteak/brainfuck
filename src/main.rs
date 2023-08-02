@@ -1,5 +1,9 @@
+mod structs;
+
 extern crate clap;
 extern crate crossterm;
+
+use structs::{AstNode, BFError, BFErrorCode, Tape, Token};
 
 use crossterm::{
     event::{self, Event},
@@ -11,42 +15,6 @@ use clap::{arg, Command};
 use std::fs::File;
 use std::io::{stdin, stdout, Read, Write};
 use std::process::exit;
-
-#[derive(Debug, PartialEq, Clone)]
-enum Token {
-    INC, // + Increment the current value
-    DEC, // - Decrement the current value
-    MLT, // < Move left in the memory array
-    MRT, // > Move right in the memory array
-    LEN, // [ Start a loop section
-    LEX, // ] End a loop section
-    OUT, // , Output the current value as character
-    INP, // . Input a character as a value
-    END, // & Immediately exits the program
-}
-#[derive(Debug)]
-enum BFErrorCode {
-    UnmatchedLoopExit,
-    UnmatchedLoopEnter,
-    KeyboardInterrupt,
-    Exit,
-}
-
-#[allow(dead_code)]
-#[derive(Debug)]
-struct BFError {
-    code: BFErrorCode,
-    message: String,
-}
-
-impl BFError {
-    fn new(code: BFErrorCode, message: String) -> Self {
-        BFError {
-            code: code,
-            message: message,
-        }
-    }
-}
 
 /// Takes a string representing the code and generates a vec of tokens,
 /// representing the program.
@@ -72,18 +40,6 @@ fn tokenize(code: String, comments: bool) -> Result<Vec<Token>, BFError> {
     }
 
     Ok(tokens)
-}
-
-#[derive(Debug, Clone)]
-enum AstNode {
-    INC,
-    DEC,
-    MRT,
-    MLT,
-    OUT,
-    INP,
-    END,
-    LOP(Vec<AstNode>),
 }
 
 /// Parses a vector of tokens into an AST
@@ -134,49 +90,6 @@ fn parse(tokens: Vec<Token>) -> Result<Vec<AstNode>, BFError> {
     }
 
     Ok(ast)
-}
-
-/// The struct represents the memory of a brainfuck program
-struct Tape {
-    cell: usize,
-    tape: Vec<u8>,
-}
-impl Tape {
-    fn new() -> Self {
-        Tape {
-            cell: 0,
-            tape: vec![0],
-        }
-    }
-    /// Moves the tape head one space to the right
-    fn mrt(&mut self) {
-        self.cell += 1;
-        if self.cell == self.tape.len() {
-            self.tape.push(0)
-        }
-    }
-    /// Moves the tape head one space to the left
-    fn mlt(&mut self) {
-        if self.cell > 0 {
-            self.cell -= 1
-        };
-    }
-    /// Returns the value in the tape head cell
-    fn get(&self) -> u8 {
-        self.tape[self.cell]
-    }
-    /// Sets the value in the tape head cell
-    fn set(&mut self, val: u8) {
-        self.tape[self.cell] = val
-    }
-    /// Adds one to the value in the tape head cell, wrapping on overflow
-    fn add(&mut self) {
-        self.tape[self.cell] = self.tape[self.cell].wrapping_add(1)
-    }
-    /// Removes one to the value in the tape head cell, wrapping on underflow
-    fn sub(&mut self) {
-        self.tape[self.cell] = self.tape[self.cell].wrapping_sub(1)
-    }
 }
 
 /// Executes a brainfuck AST, given the memory tape
