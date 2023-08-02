@@ -188,9 +188,12 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> Result<(), BFError> {
             AstNode::DEC => tape.sub(),
             AstNode::MRT => tape.mrt(),
             AstNode::MLT => tape.mlt(),
-            AstNode::END => return Err(
-                BFError { code: BFErrorCode::Exit,
-                            message: format!("Program exited with code {}",tape.get()) }),
+            AstNode::END => {
+                return Err(BFError {
+                    code: BFErrorCode::Exit,
+                    message: format!("Program exited with code {}", tape.get()),
+                })
+            }
             AstNode::OUT => {
                 print!("{}", tape.get() as char);
                 stdout().flush().unwrap_or_default()
@@ -284,9 +287,8 @@ fn main() {
     };
     let mut tape = Tape::new();
 
-
     match execute(ast, &mut tape) {
         Ok(()) => (),
-        Err(e) => eprintln!("\n{}", e.message)
+        Err(e) => eprintln!("\n{}", e.message),
     };
 }
