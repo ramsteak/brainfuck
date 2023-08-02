@@ -27,6 +27,7 @@ enum Token {
 enum BFErrorCode {
     UnmatchedLoopExit,
     UnmatchedLoopEnter,
+    KeyboardInterrupt,
 }
 
 #[allow(dead_code)]
@@ -171,7 +172,7 @@ impl Tape {
 }
 
 /// Executes a brainfuck AST, given the memory tape
-fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
+fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> Result<(), BFError> {
     terminal::enable_raw_mode().unwrap();
     for node in ast {
         match node {
@@ -184,25 +185,49 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
                 stdout().flush().unwrap_or_default()
             }
             AstNode::INP => loop {
-                if let Ok(Event::Key(event::KeyEvent {
-                    code: event::KeyCode::Char(char),
-                    modifiers: _,
-                    kind: event::KeyEventKind::Press,
-                    state: _,
-                })) = event::read()
-                {
-                    tape.set(char as u8);
-                    break;
-                };
+                match event::read() {
+                    Ok(Event::Key(event::KeyEvent {
+                        code: event::KeyCode::Char('c'),
+                        kind: event::KeyEventKind::Press,
+                        state: _,
+                        modifiers: event::KeyModifiers::CONTROL,
+                    })) => {
+                        return Err(BFError {
+                            code: BFErrorCode::KeyboardInterrupt,
+                            message: "Received Ctrl-C".to_string(),
+                        })
+                    }
+                    Ok(Event::Key(event::KeyEvent {
+                        code: event::KeyCode::Enter,
+                        kind: event::KeyEventKind::Press,
+                        state: _,
+                        modifiers: _,
+                    })) => {
+                        tape.set('\n' as u8);
+                        break;
+                    }
+
+                    Ok(Event::Key(event::KeyEvent {
+                        code: event::KeyCode::Char(char),
+                        kind: event::KeyEventKind::Press,
+                        state: _,
+                        modifiers: _,
+                    })) => {
+                        tape.set(char as u8);
+                        break;
+                    }
+                    _ => (),
+                }
             },
             AstNode::LOP(subloop) => {
                 while tape.get() != 0 {
-                    execute(subloop.clone(), tape)
+                    execute(subloop.clone(), tape)?
                 }
             }
         }
     }
     terminal::disable_raw_mode().unwrap();
+    Ok(())
 }
 
 fn main() {
