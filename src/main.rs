@@ -29,6 +29,7 @@ enum BFErrorCode {
     UnmatchedLoopEnter,
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 struct BFError {
     code: BFErrorCode,
