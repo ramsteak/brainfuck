@@ -161,7 +161,6 @@ impl Tape {
 
 fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
     terminal::enable_raw_mode().unwrap();
-    println!("{}",terminal::is_raw_mode_enabled().unwrap());
     for node in ast {
         match node {
             AstNode::INC => tape.add(),
