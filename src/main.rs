@@ -44,6 +44,8 @@ impl BFError {
     }
 }
 
+/// Takes a string representing the code and generates a vec of tokens,
+/// representing the program.
 fn tokenize(code: String) -> Result<Vec<Token>, BFError> {
     let mut tokens = Vec::<Token>::new();
 
@@ -75,6 +77,7 @@ enum AstNode {
     LOP(Vec<AstNode>),
 }
 
+/// Parses a vector of tokens into an AST
 fn parse(tokens: Vec<Token>) -> Result<Vec<AstNode>, BFError> {
     let mut ast = Vec::<AstNode>::new();
     let mut depth = 0;
@@ -123,6 +126,7 @@ fn parse(tokens: Vec<Token>) -> Result<Vec<AstNode>, BFError> {
     Ok(ast)
 }
 
+/// The struct represents the memory of a brainfuck program
 struct Tape {
     cell: usize,
     tape: Vec<u8>,
@@ -134,31 +138,38 @@ impl Tape {
             tape: vec![0],
         }
     }
+    /// Moves the tape head one space to the right
     fn mrt(&mut self) {
         self.cell += 1;
         if self.cell == self.tape.len() {
             self.tape.push(0)
         }
     }
+    /// Moves the tape head one space to the left
     fn mlt(&mut self) {
         if self.cell > 0 {
             self.cell -= 1
         };
     }
+    /// Returns the value in the tape head cell
     fn get(&self) -> u8 {
         self.tape[self.cell]
     }
+    /// Sets the value in the tape head cell
     fn set(&mut self, val: u8) {
         self.tape[self.cell] = val
     }
+    /// Adds one to the value in the tape head cell, wrapping on overflow
     fn add(&mut self) {
         self.tape[self.cell] = self.tape[self.cell].wrapping_add(1)
     }
+    /// Removes one to the value in the tape head cell, wrapping on underflow
     fn sub(&mut self) {
         self.tape[self.cell] = self.tape[self.cell].wrapping_sub(1)
     }
 }
 
+/// Executes a brainfuck AST, given the memory tape
 fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
     terminal::enable_raw_mode().unwrap();
     for node in ast {
@@ -171,20 +182,18 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
                 print!("{}", tape.get() as char);
                 stdout().flush().unwrap_or_default()
             }
-            AstNode::INP => {
-                loop {
-                    if let Ok(
-                        Event::Key(event::KeyEvent {
-                            code: event::KeyCode::Char(char),
-                            modifiers: _,
-                            kind: event::KeyEventKind::Press,
-                            state: _
-                })) = event::read() {
-                        tape.set(char as u8);
-                        break;
-                    };
-                }
-            }
+            AstNode::INP => loop {
+                if let Ok(Event::Key(event::KeyEvent {
+                    code: event::KeyCode::Char(char),
+                    modifiers: _,
+                    kind: event::KeyEventKind::Press,
+                    state: _,
+                })) = event::read()
+                {
+                    tape.set(char as u8);
+                    break;
+                };
+            },
             AstNode::LOP(subloop) => {
                 while tape.get() != 0 {
                     execute(subloop.clone(), tape)
@@ -200,7 +209,7 @@ fn main() {
         arg![path: [path] "The path of the .bf file.\nIf no path is specified, reads from stdin to EOF (Ctrl-D / Ctrl-Z)"],
     );
 
-    let matches = command.get_matches_from(["brainfuck", "./code.bf"]);
+    let matches = command.get_matches();
 
     let mut code = String::new();
     let code = match matches.get_one::<String>("path") {
