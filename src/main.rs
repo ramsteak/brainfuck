@@ -172,15 +172,18 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> () {
                 stdout().flush().unwrap_or_default()
             }
             AstNode::INP => {
-                if let Ok(
+                loop {
+                    if let Ok(
                         Event::Key(event::KeyEvent {
                             code: event::KeyCode::Char(char),
-                            modifiers: event::KeyModifiers::NONE,
-                            kind: event::KeyEventKind::Release,
+                            modifiers: _,
+                            kind: event::KeyEventKind::Press,
                             state: _
-                })) = event::read(){
-                    tape.set(char as u8);
-                };
+                })) = event::read() {
+                        tape.set(char as u8);
+                        break;
+                    };
+                }
             }
             AstNode::LOP(subloop) => {
                 while tape.get() != 0 {
@@ -197,7 +200,7 @@ fn main() {
         arg![path: [path] "The path of the .bf file.\nIf no path is specified, reads from stdin to EOF (Ctrl-D / Ctrl-Z)"],
     );
 
-    let matches = command.get_matches();
+    let matches = command.get_matches_from(["brainfuck", "./code.bf"]);
 
     let mut code = String::new();
     let code = match matches.get_one::<String>("path") {
