@@ -26,6 +26,8 @@ Make sure to have rust and cargo installed on your system.
 1. Alternatively you can input your program from stdin with `cargo run --`
 1. To terminate the input press Ctrl-D on Unix and Ctrl-Z on Windows.
 
+Alternatively for windows, download the executable brainfuck.exe from the releases section.
+
 ## Contributions
 
 Contributions to this project are welcome! If you find any issues, have feature suggestions, or want to improve the code, feel free to submit a pull request.
