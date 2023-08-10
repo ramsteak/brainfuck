@@ -92,15 +92,17 @@ impl Tape {
 impl fmt::Debug for Tape {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut res = String::new();
-        for (i,b) in self.tape.iter().enumerate() {
-            let ch = if b.is_ascii_graphic() {b.clone() as char} else {' '};
+        for (i, b) in self.tape.iter().enumerate() {
+            let ch = if b.is_ascii_graphic() {
+                b.clone() as char
+            } else {
+                ' '
+            };
             if i == self.cell {
                 res.push_str(&format!("[{b:02X}{ch}]"));
-            }else{
+            } else {
                 res.push_str(&format!(" {b:02X}{ch} "));
             }
-
-            
         }
         write!(f, "<{}>", res)
     }
