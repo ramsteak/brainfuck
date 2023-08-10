@@ -33,6 +33,7 @@ fn tokenize(code: String, comments: bool) -> Result<Vec<Token>, BFError> {
             (',', false, _) => tokens.push(Token::INP),
             ('.', false, _) => tokens.push(Token::OUT),
             ('&', false, _) => tokens.push(Token::END),
+            ('?', false, _) => tokens.push(Token::DBG),
             ('#', _, true) => comment = true,
             ('\n', true, true) => comment = false,
             _ => (),
@@ -58,6 +59,7 @@ fn parse(tokens: Vec<Token>) -> Result<Vec<AstNode>, BFError> {
                 Token::OUT => ast.push(AstNode::OUT),
                 Token::INP => ast.push(AstNode::INP),
                 Token::END => ast.push(AstNode::END),
+                Token::DBG => ast.push(AstNode::DBG),
                 Token::LEX => {
                     return Err(BFError::new(
                         BFErrorCode::UnmatchedLoopExit,
@@ -101,6 +103,7 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> Result<(), BFError> {
             AstNode::DEC => tape.sub(),
             AstNode::MRT => tape.mrt(),
             AstNode::MLT => tape.mlt(),
+            AstNode::DBG => println!("{:?}", tape),
             AstNode::END => {
                 return Err(BFError {
                     code: BFErrorCode::Exit,

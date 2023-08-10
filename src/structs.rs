@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     INC, // + Increment the current value
@@ -9,6 +11,7 @@ pub enum Token {
     OUT, // , Output the current value as character
     INP, // . Input a character as a value
     END, // & Immediately exits the program
+    DBG, // ? Debug, prints the entire memory to stdout
 }
 #[derive(Debug)]
 pub enum BFErrorCode {
@@ -40,6 +43,7 @@ pub enum AstNode {
     INP,
     END,
     LOP(Vec<AstNode>),
+    DBG,
 }
 
 /// The struct represents the memory of a brainfuck program
@@ -82,5 +86,22 @@ impl Tape {
     /// Removes one to the value in the tape head cell, wrapping on underflow
     pub fn sub(&mut self) {
         self.tape[self.cell] = self.tape[self.cell].wrapping_sub(1)
+    }
+}
+
+impl fmt::Debug for Tape {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut res = String::new();
+        for (i,b) in self.tape.iter().enumerate() {
+            let ch = if b.is_ascii_graphic() {b.clone() as char} else {' '};
+            if i == self.cell {
+                res.push_str(&format!("[{b:02X}{ch}]"));
+            }else{
+                res.push_str(&format!(" {b:02X}{ch} "));
+            }
+
+            
+        }
+        write!(f, "<{}>", res)
     }
 }
