@@ -1,5 +1,9 @@
 # Brainfuck
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![GitHub release](https://img.shields.io/github/v/release/ramsteak/brainfuck.svg)
+[![Rust](https://github.com/ramsteak/brainfuck/actions/workflows/rust.yml/badge.svg)](https://github.com/ramsteak/brainfuck/actions/workflows/rust.yml)
+
 This is a simple Brainfuck interpreter written in Rust. Brainfuck is an esoteric programming language consisting of only eight commands and ran on an infinite memory tape.
 This version supports line comments with `#` and implements two additional commands:
 
