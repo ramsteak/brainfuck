@@ -1,9 +1,11 @@
 mod structs;
+mod compiler;
 
 extern crate clap;
 extern crate crossterm;
 
 use structs::{AstNode, BFError, BFErrorCode, Tape, Token};
+use compiler::compile_ast_c;
 
 use crossterm::{
     event::{self, Event},
@@ -12,7 +14,7 @@ use crossterm::{
 
 use clap::{arg, Command};
 
-use std::fs::File;
+use std::{fs::{File, self}, path::PathBuf};
 use std::io::{stdin, stdout, Read, Write};
 use std::process::exit;
 
@@ -163,7 +165,8 @@ fn execute(ast: Vec<AstNode>, tape: &mut Tape) -> Result<(), BFError> {
 fn main() {
     let command = Command::new("brainfuck").version("0.1.0")
         .arg(arg![path: [path] "The path of the .bf file.\nIf absent, reads from stdin to EOF (Ctrl-D / Ctrl-Z)"],)
-        .arg(arg![comments: -c --comments "Line comments start with # and end at a newline"]);
+        .arg(arg![comments: -m --comments "Line comments start with # and end at a newline"])
+        .arg(arg![compile: -c --compile "Compiles the code to c"]);
 
     let matches = command.get_matches();
 
@@ -201,10 +204,23 @@ fn main() {
             exit(-1)
         }
     };
-    let mut tape = Tape::new();
 
-    match execute(ast, &mut tape) {
-        Ok(()) => (),
-        Err(e) => eprintln!("\n{}", e.message),
-    };
+    match matches.get_one::<bool>("compile") {
+        Some(true) => {
+            let c_code = compile_ast_c(&ast);
+            let mut filename = PathBuf::from(matches.get_one::<String>("path").unwrap());
+            filename.set_extension("c");
+            fs::write(filename, c_code).expect("Failed to write c code");
+        },
+        _ => {
+            // Execute the code
+            let mut tape = Tape::new();
+        
+            match execute(ast, &mut tape) {
+                Ok(()) => (),
+                Err(e) => eprintln!("\n{}", e.message),
+            };
+        }
+    }
+
 }
