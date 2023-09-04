@@ -4,9 +4,10 @@
 ![GitHub release](https://img.shields.io/github/v/release/ramsteak/brainfuck.svg)
 [![Rust](https://github.com/ramsteak/brainfuck/actions/workflows/rust.yml/badge.svg)](https://github.com/ramsteak/brainfuck/actions/workflows/rust.yml)
 
-This is a simple Brainfuck interpreter written in Rust. Brainfuck is an esoteric programming language consisting of only eight commands and ran on an infinite memory tape.
+This is a simple Brainfuck interpreter/transpiler written in Rust. Brainfuck is an esoteric programming language consisting of only eight commands and ran on an infinite memory tape.
 This version supports line comments with `#` and implements two additional commands:
 
+- `#` : everything between a `#` and a newline is considered a comment (must be activated with the `-m` flag)
 - `&` : immediately terminates the program, with exit code of the active cell
 - `?` : prints the entire memory tape, useful for debug purposes
 
@@ -17,20 +18,33 @@ This version supports line comments with `#` and implements two additional comma
 - Executes the AST on a virtual tape that simulates the memory of the Brainfuck program.
 - Supports both reading Brainfuck code from a file and reading from standard input.
 - Handles input and output with ASCII characters.
-- Custom instruction &: immediately terminates execution and returns status code
+- Custom instructions & and ?
+- Transpiles the code into c (each instruction is translated directly with no optimization) in order to compile to binaries
 
-## Usage
+## Compilation
 
 Make sure to have rust and cargo installed on your system.
 
 1. Clone the repository
 1. Build the project with cargo `cargo build`
-1. Alternatively use the makefile with `make build`
 1. Run with cargo `cargo run -- ./code.bf`
 1. Alternatively you can input your program from stdin with `cargo run --`
 1. To terminate the input press Ctrl-D on Unix and Ctrl-Z on Windows.
 
-Alternatively for windows, download the executable brainfuck.exe from the releases section.
+You can also build the interpreter with make:
+
+1. Build with the provided makefile with `make build`
+1. Run the interpreter with `./brainfuck ./code.bf`
+
+### Usage
+
+`brainfuck [OPTIONS] [path]`
+
+- `-h`: prints the usage
+- `-c`: transpiles the bf file into c
+- `-m`: turns on line comments
+- `-v`: prints the version
+- `path`: the path of the bf file
 
 ## Contributions
 
@@ -42,4 +56,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Issues
 
-The program runs as expected on Windows, but has unexpected behaviour with text input/output on Linux.
+The program runs as expected on Windows, but on Linux the `,` instruction reads to a buffer, and does not print until a newline is sent
