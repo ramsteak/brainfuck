@@ -1,9 +1,10 @@
 use crate::structs::AstNode;
 
-static C_HEADER: &'static str = "
+static C_HEADER: &'static str = "\
 # include <stdio.h>
 
 int main() {
+    setbuf(stdout, NULL);
     unsigned char tape[10000] = {0};
     unsigned char *ptr = tape+500;
 ";
@@ -14,7 +15,7 @@ static C_DECREASE: &'static str = "    --*ptr;\n";
 static C_MOVERIGT: &'static str = "    ++ptr;\n";
 static C_MOVELEFT: &'static str = "    --ptr;\n";
 static C_OUTPUTCH: &'static str = "    putchar(*ptr);\n";
-static C_INPUTCHR: &'static str = "    *ptr = getchar();\n";
+static C_INPUTCHR: &'static str = "    *ptr = getch();\n";
 static C_LOOPSTRT: &'static str = "    while (*ptr) {\n";
 static C_LOOPENDS: &'static str = "    }\n";
 static C_EXITEXIT: &'static str = "    exit(*ptr);\n";
